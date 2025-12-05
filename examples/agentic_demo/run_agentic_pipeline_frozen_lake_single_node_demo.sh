@@ -1,6 +1,7 @@
 #!/bin/bash
 set +x
 
+pip install ./mcore_adapter
 ROLL_PATH="/workspace/ROLL-main"
 CONFIG_PATH=$(basename $(dirname $0))
 export PYTHONPATH="$ROLL_PATH:$PYTHONPATH"
