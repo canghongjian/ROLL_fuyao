@@ -1,0 +1,70 @@
+defaults:
+  - ../../examples/config/traj_envs@_here_
+  - ../../examples/config/deepspeed_zero@_here_
+  - ../../examples/config/deepspeed_zero2@_here_
+  - ../../examples/config/deepspeed_zero3@_here_
+  - ../../examples/config/deepspeed_zero3_cpuoffload@_here_
+
+hydra:
+  run:
+    dir: .
+  output_subdir: null
+
+exp_name: ${oc.env:BIFROST_JOB_NAME}_openthoughts_qwen3-8B-sft
+seed: 42
+local_save_path: /log/roll_output
+logging_dir: ${local_save_path}/logs
+output_dir: ${local_save_path}
+system_envs:
+  USE_MODELSCOPE: '1'
+
+track_with: swanlab  
+tracker_kwargs:  
+  login_kwargs:  
+    api_key: ${oc.env:SWANLAB_API_KEY}  # 您的SwanLab API密钥  
+  project: roll-experiments  # 项目名称  
+  logdir: ${local_save_path}/swanlog  # 日志存储目录  
+  experiment_name: ${exp_name}  # 实验名称  
+  tags:  # 实验标签  
+    - roll  
+    - sft  
+    - qwen3_8b
+
+num_gpus_per_node: 8
+
+save_steps: 200
+logging_steps: 1
+resume_from_checkpoint: false
+
+sequence_length: 17000
+
+pretrain: /publicdata/huggingface.co/Qwen/Qwen3-8B
+
+# sft related 
+# system_key: system_prompt # use the default system prompt in the tokenizer tmplate if not provided
+prompt_key: instruction
+query_key: input
+response_key: output
+
+sft_train:
+  model_args:
+    dtype: bf16
+  training_args:
+    num_train_epochs: 5
+    per_device_train_batch_size: 2
+    gradient_accumulation_steps: 16
+    learning_rate: 4.0e-5
+  data_args:
+    file_name: /workspace/zhangjh37@xiaopeng.com/tmp/openthoughts_3k_alpaca.json
+    template: qwen2_5
+    preprocessing_num_workers: 4
+  strategy_args:
+    strategy_name: megatron_train
+    strategy_config:
+      tensor_model_parallel_size: 2
+      sequence_parallel: true
+      pipeline_model_parallel_size: 2
+      use_distributed_optimizer: true
+      context_parallel_size: 2
+  device_mapping: list(range(0,8))
+  infer_batch_size: 2

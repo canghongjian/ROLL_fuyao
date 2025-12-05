@@ -15,6 +15,7 @@ from codetiming import Timer
 from tqdm import tqdm
 import signal
 import multiprocessing
+from roll.pipeline.rlvr.rewards.math_utils import grade_answer_verl
 
 from roll.configs.worker_config import WorkerConfig
 from roll.distributed.executor.worker import Worker
@@ -24,6 +25,50 @@ from roll.distributed.strategy.factory import create_strategy
 from roll.distributed.strategy.strategy import InferenceStrategy, TrainStrategy
 from roll.models.model_providers import default_reward_model_provider, default_tokenizer_provider
 from roll.utils.context_managers import state_offload_manger
+
+def last_boxed_only_string(string):
+    idx = string.rfind("\\boxed")
+    if idx < 0:
+        idx = string.rfind("\\fbox")
+        if idx < 0:
+            return None
+
+    i = idx
+    right_brace_idx = None
+    num_left_braces_open = 0
+    while i < len(string):
+        if string[i] == "{":
+            num_left_braces_open += 1
+        if string[i] == "}":
+            num_left_braces_open -= 1
+            if num_left_braces_open == 0:
+                right_brace_idx = i
+                break
+        i += 1
+
+    if right_brace_idx == None:
+        retval = None
+    else:
+        retval = string[idx : right_brace_idx + 1]
+
+    return retval
+
+
+def remove_boxed(s):
+    left = "\\boxed{"
+    try:
+        assert s[: len(left)] == left
+        assert s[-1] == "}"
+        return s[len(left) : -1]
+    except:
+        return None
+
+
+def extract_boxed_answer(solution: str) -> str:
+    """Extract the answer from inside a LaTeX \\boxed{} command"""
+    solution = last_boxed_only_string(solution)
+    solution = remove_boxed(solution)
+    return solution
 
 class timeout:
     def __init__(self, seconds=1, error_message="Timeout"):
@@ -39,7 +84,7 @@ class timeout:
 
     def __exit__(self, type, value, traceback):
         signal.alarm(0)
-        
+
 def _extract_after_last_end_think(response: str) -> str:
     """
     提取字符串中最后一个 "</think>" 标签之后的所有文本。
@@ -111,7 +156,7 @@ def _hf_verify_math_sample(response, answer, result):
            => 建议：保持默认值，确保程序的健壮性，不会因单个样本出错而中断。
         """
         parsed_answers = parse(cleaned_response, fallback_mode="no_fallback")
-        
+        print(f"cleaned_response:{cleaned_response}, parsed_answers:{parsed_answers}")
         # 如果解析结果为空，则认为提取失败
         if not parsed_answers:
             exect_answer = None
@@ -129,6 +174,7 @@ def _hf_verify_math_sample(response, answer, result):
             result.append((ans, str(gold_answer[0]), str(exect_answer)))
             
     except Exception as e:
+        print('exception:', e)
         # 捕获任何潜在的异常，确保进程不会崩溃
         result.append((False, "", ""))
 
@@ -224,9 +270,10 @@ class MathRuleRewardWorker(Worker):
             
             try:
                 with timeout(5):
-                    correct, extracted_ground_truth, extracted_response = hf_verify_math_sample(
-                        response, f"${answer}$"
-                    )
+                    # correct, extracted_ground_truth, extracted_response = hf_verify_math_sample(
+                    #     response, f"${answer}$"
+                    # )
+                    correct, extracted_ground_truth, extracted_response = grade_answer_verl(response, answer)
             
                 log_data = {
                     "response": response,
@@ -270,3 +317,9 @@ class MathRuleRewardWorker(Worker):
 
         self.logger.debug(f"reward output: {output}, response_level_rewards: {response_level_rewards}")
         return output
+
+
+if __name__ == "__main__":
+    data = {"response": "<think>\nOkay, so I need to figure out what 9 divided by 2 is as a decimal. Let me think. Hmm, I remember that dividing by 2 is the same as splitting something into two equal parts. But how does that translate to decimals?\n\nWait, maybe I should just do the division. Let me write it out. 9 divided by 2. Let me recall how long division works. So, 2 goes into 9 how many times? Well, 2 times 4 is 8, and 2 times 5 is 10. But 10 is too big, so it's 4 times. So 4 times 2 is 8. Subtract 8 from 9, and I get a remainder of 1. Then I add a decimal point and a zero, making it 10. Now, 2 goes into 10 exactly 5 times. So that would be 4.5? Let me check that again.\n\nAlternatively, maybe I can think of 9/2 as a fraction. Since 9 divided by 2 is the same as 4 and 1/2. Because 2 times 4 is 8, and then there's 1 left over, which is 1/2. And 1/2 as a decimal is 0.5. So adding that to 4 gives me 4.5. That seems right.\n\nWait, let me verify with another method. If I multiply 4.5 by 2, I should get 9. Let me do that. 4.5 times 2. 4 times 2 is 8, and 0.5 times 2 is 1. So 8 + 1 is 9. Perfect, that checks out. So 9 divided by 2 is indeed 4.5.\n\nIs there another way to think about this? Maybe converting the fraction to a decimal by expanding the denominator to 10? Let me try. If I have 9/2, I can multiply numerator and denominator by 5 to get the denominator to 10. So 9 times 5 is 45, and 2 times 5 is 10. So that becomes 45/10, which is 4.5. Yep, same answer.\n\nI think that's solid. All methods point to 4.5. I don't see any mistakes in my reasoning. So the decimal form of 9/2 is 4.5.\n\n**Final Answer**\nThe decimal form of $\\frac{9}{2}$ is \\boxed{4.5}.\n</think>\n\nTo express the fraction $\\frac{9}{2}$ as a decimal, we can approach the problem through division or by converting the fraction to a decimal directly.\n\n---\n\n### Step 1: Perform the Division\n\nWe divide the numerator (9) by the denominator (2):\n\n$$\n9 \\div 2\n$$\n\n- 2 goes into 9 **4 times** (since $2 \\times 4 = 8$).\n- Subtract 8 from 9, leaving a remainder of **1**.\n- Bring down a zero (to continue the division), making it **10**.\n- 2 goes into 10 **5 times** (since $2 \\times 5 = 10$).\n\nSo, the result of the division is:\n\n$$\n4.5\n$$\n\n---\n\n### Step 2: Confirm with Fraction Conversion\n\nWe can also convert the fraction $\\frac{9}{2}$ to a mixed number:\n\n$$\n\\frac{9}{2} = 4 \\frac{1}{2}\n$$\n\nNow, convert the fractional part $\\frac{1}{2}$ to a decimal:\n\n$$\n\\frac{1}{2} = 0.5\n$$\n\nAdding this to the whole number part:\n\n$$\n4 + 0.5 = 4.5\n$$\n\n---\n\n### Step 3: Verification\n\nTo ensure accuracy, we can reverse the process by multiplying the decimal by the denominator:\n\n$$\n4.5 \\times 2 = 9\n$$\n\nThis confirms that the decimal representation is correct.\n\n---\n\n### Final Answer\n\n$$\n\\boxed{4.5}\n$$<|im_end|>", "extracted_response": "", "answer": "4.5", "extracted_ground_truth": "", "correct": False}
+    arr = []
+    print(grade_answer_verl(data['response'], '4.5'))
