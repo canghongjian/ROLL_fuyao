@@ -1,26 +1,18 @@
-defaults:
-  - ../../examples/config/traj_envs@_here_
-  - ../../examples/config/deepspeed_zero@_here_
-  - ../../examples/config/deepspeed_zero2@_here_
-  - ../../examples/config/deepspeed_zero3@_here_
-  - ../../examples/config/deepspeed_zero3_cpuoffload@_here_
-
 hydra:
   run:
     dir: .
   output_subdir: null
 
-pretrain: /publicdata/huggingface.co/Qwen/Qwen3-8B
-reward_pretrain: /publicdata/huggingface.co/Qwen/Qwen3-8B
+pretrain: /publicdata/huggingface.co/Qwen/Qwen3-30B-A3B-Base
+reward_pretrain: /publicdata/huggingface.co/Qwen/Qwen3-30B-A3B-Base
 
-exp_name: ${oc.env:BIFROST_JOB_NAME}_qwen3-8B-rlvr-deepmath
+exp_name: ${oc.env:BIFROST_JOB_NAME}_qwen3-30BA3B-rlvr-deepmath
 seed: 42
 local_save_path: /log/roll_output
 logging_dir: ${local_save_path}/logs
 output_dir: ${local_save_path}
 system_envs:
   USE_MODELSCOPE: '1'
-
 
 checkpoint_config:
   type: file_system
@@ -34,24 +26,9 @@ tracker_kwargs:
   logdir: ${local_save_path}/swanlog  # 日志存储目录  
   experiment_name: ${exp_name}  # 实验名称  
   tags:  # 实验标签  
-    - qwen3_8b  
-    - rl  
-    - grpo
-
-#track_with: wandb
-#tracker_kwargs:
-#  api_key: ${oc.env:WANDB_API_KEY}
-#  project: roll-agentic
-#  name: ${exp_name}_frozen_lake
-#  notes: "agentic_pipeline"
-#  tags:
-#    - agentic
-#    - roll
-#    - baseline
-
-# track_with: tensorboard
-# tracker_kwargs:
-#   log_dir: ${local_save_path}/tensorboard/roll_exp/agentic_frozen_lake
+    - roll  
+    - rlvr  
+    - qwen3_moe
 
 num_gpus_per_node: 8
 
@@ -95,20 +72,17 @@ whiten_advantages: true
 # max_running_requests: 256
 # is_num_return_sequences_expand: false
 
-
 validation:
   data_args:
-    template: qwen3
+    template: qwen2_5
     file_name:
       - data/math_benchmarks.jsonl
   generating_args:
-    max_new_tokens: ${response_length}
     top_p: 0.6
     top_k: 50
     num_beams: 1
     temperature: 0.6
     num_return_sequences: 1
-
 
 actor_train:
   model_args:
@@ -135,12 +109,17 @@ actor_train:
     strategy_name: megatron_train
     strategy_config:
       tensor_model_parallel_size: 2
-      pipeline_model_parallel_size: 1
-      expert_model_parallel_size: 1
+      pipeline_model_parallel_size: 2
+      virtual_pipeline_model_parallel_size: 8
+      expert_model_parallel_size: 4
+      context_parallel_size: 1
       use_distributed_optimizer: true
-      recompute_granularity: full
-  device_mapping: list(range(0,8))
-  infer_batch_size: 4
+      sequence_parallel: true
+      moe_token_dispatcher_type: "alltoall"
+      moe_grouped_gemm: true
+      moe_layer_recompute: true
+  device_mapping: list(range(0,32))
+  infer_batch_size: 2
 
 actor_infer:
   model_args:
@@ -154,14 +133,14 @@ actor_infer:
     temperature: 0.99
     num_return_sequences: ${num_return_sequences_in_group}
   data_args:
-    template: qwen3
+    template: qwen2_5
   strategy_args:
     strategy_name: sglang
     strategy_config:
       mem_fraction_static: 0.7
       load_format: dummy
   num_gpus_per_worker: 2
-  device_mapping: list(range(0,8))
+  device_mapping: list(range(0,32))
   infer_batch_size: 1
 
 reference:
@@ -170,14 +149,16 @@ reference:
     dtype: bf16
     model_type: ~
   data_args:
-    template: qwen3
+    template: qwen2_5
   strategy_args:
     strategy_name: megatron_infer
     strategy_config:
       tensor_model_parallel_size: 1
       pipeline_model_parallel_size: 1
-      expert_model_parallel_size: 1
-  device_mapping: list(range(0,8))
+      expert_model_parallel_size: 4
+      moe_token_dispatcher_type: "alltoall"
+      moe_grouped_gemm: true
+  device_mapping: list(range(0,32))
   infer_batch_size: 2
 
 rewards:

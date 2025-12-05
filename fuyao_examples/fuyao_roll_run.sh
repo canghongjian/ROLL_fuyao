@@ -230,6 +230,7 @@ if [[ ${NODE_RANK} == 0 ]]; then
        --config_path $CONFIG_PATH \
        --config_name $CONFIG_NAME
     
+    # todo: 检查megatron 训练完后自动转为huggingface，注意xbigdata库怎么装
 else
     # 工作节点：连接主节点Ray集群，保持存活
     echo "Starting Ray worker node (connect to $MASTER_ADDR:$RAY_PORT)..."
