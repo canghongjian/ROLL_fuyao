@@ -1,3 +1,6 @@
+upstream*
+local_git_sha.txt
+# Ignore all png files
 *.png
 *.pyc
 */checkpoint_dir
@@ -98,16 +101,16 @@ ipython_config.py
 
 # pipenv
 #   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
+#  However, in case of collaboration, if having platform-specific dependencies or dependencies
+# having no cross-platform support, pipenv may install dependencies that don't work, or not
+# install all needed dependencies.
 #Pipfile.lock
 
 # poetry
 #   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
+#  This is especially recommended for binary packages to ensure reproducibility, and is
+#  commonly ignored for libraries.
+#  https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
 #poetry.lock
 
 # pdm
@@ -115,7 +118,7 @@ ipython_config.py
 #pdm.lock
 #   pdm stores project-wide configurations in .pdm.toml, but it is recommended to not include it
 #   in version control.
-#   https://pdm.fming.dev/#use-with-ide
+#  https://pdm.fming.dev/#use-with-ide
 .pdm.toml
 
 # PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
@@ -146,7 +149,7 @@ venv.bak/
 /site
 
 # mypy
-.mypy_cache/
+.mypy_cache
 .dmypy.json
 dmypy.json
 
