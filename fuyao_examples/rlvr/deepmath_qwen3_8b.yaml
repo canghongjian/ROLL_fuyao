@@ -21,10 +21,9 @@ output_dir: ${local_save_path}
 system_envs:
   USE_MODELSCOPE: '1'
 
-
 checkpoint_config:
   type: file_system
-  output_dir: ${local_save_path}/${exp_name}
+  output_dir: ${oc.env:CPFS_DIR}/roll_ckpt_${exp_name}
 
 track_with: swanlab  
 tracker_kwargs:  

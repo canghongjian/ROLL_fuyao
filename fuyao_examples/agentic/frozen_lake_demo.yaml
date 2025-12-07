@@ -22,6 +22,10 @@ render_save_dir: ${local_save_path}/render
 system_envs:
   USE_MODELSCOPE: '1'
 
+checkpoint_config:
+  type: file_system
+  output_dir: ${oc.env:CPFS_DIR}/roll_ckpt_${exp_name}
+
 track_with: swanlab  
 tracker_kwargs:  
   login_kwargs:  
@@ -49,9 +53,6 @@ tracker_kwargs:
 # tracker_kwargs:
 #   log_dir: /log/xflow_logs/
 
-checkpoint_config:
-  type: file_system
-  output_dir: ${render_save_dir}
 
 num_gpus_per_node: 8
 

@@ -18,6 +18,10 @@ output_dir: ${local_save_path}
 system_envs:
   USE_MODELSCOPE: '1'
 
+checkpoint_config:
+  type: file_system
+  output_dir: ${oc.env:CPFS_DIR}/roll_ckpt_${exp_name}
+
 track_with: swanlab  
 tracker_kwargs:  
   login_kwargs:  
@@ -32,7 +36,7 @@ tracker_kwargs:
 
 num_gpus_per_node: 8
 
-save_steps: 200
+save_steps: 100
 logging_steps: 1
 resume_from_checkpoint: false
 
