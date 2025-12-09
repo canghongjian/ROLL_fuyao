@@ -52,7 +52,6 @@ tracker_kwargs:
 # tracker_kwargs:
 #   log_dir: ${local_save_path}/tensorboard/roll_exp/agentic_frozen_lake
 
-num_nodes: 2
 num_gpus_per_node: 8
 
 max_steps: 500
@@ -64,7 +63,7 @@ resume_from_checkpoint: false
 
 rollout_batch_size: 64  # prompt
 prompt_length: 2048
-response_length: 8192
+response_length: 16384
 
 num_return_sequences_in_group: 8
 ppo_epochs: 1
@@ -137,10 +136,12 @@ actor_train:
       tensor_model_parallel_size: 2
       pipeline_model_parallel_size: 1
       expert_model_parallel_size: 1
+      context_parallel_size: 2
+      sequence_parallel: true
       use_distributed_optimizer: true
       recompute_granularity: full
-  device_mapping: list(range(0,16))
-  infer_batch_size: 4
+  device_mapping: list(range(0,8))
+  infer_batch_size: 2
 
 actor_infer:
   model_args:
@@ -161,7 +162,7 @@ actor_infer:
       mem_fraction_static: 0.7
       load_format: dummy
   num_gpus_per_worker: 2
-  device_mapping: list(range(0,16))
+  device_mapping: list(range(0,8))
   infer_batch_size: 1
 
 reference:
@@ -177,7 +178,7 @@ reference:
       tensor_model_parallel_size: 1
       pipeline_model_parallel_size: 1
       expert_model_parallel_size: 1
-  device_mapping: list(range(0,16))
+  device_mapping: list(range(0,8))
   infer_batch_size: 2
 
 rewards:
