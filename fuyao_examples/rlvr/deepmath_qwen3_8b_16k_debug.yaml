@@ -13,13 +13,17 @@ hydra:
 pretrain: /publicdata/huggingface.co/Qwen/Qwen3-8B
 reward_pretrain: /publicdata/huggingface.co/Qwen/Qwen3-8B
 
-exp_name: ${oc.env:BIFROST_JOB_NAME}_qwen3-8B-rlvr-deepmath
+exp_name: ${oc.env:BIFROST_JOB_NAME}_qwen3-8B-16k-debug-rlvr-deepmath
 seed: 42
 local_save_path: /log/roll_output
 logging_dir: ${local_save_path}/logs
 output_dir: ${oc.env:CPFS_DIR}/roll_output/${exp_name}
 system_envs:
   USE_MODELSCOPE: '1'
+  ROLL_LOG_LEVEL: "DEBUG"
+  RAY_PROFILING: "1"
+
+profiler_output_dir: ${local_save_path}/profile/${exp_name}
 
 checkpoint_config:
   type: file_system

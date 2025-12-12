@@ -4,4 +4,4 @@
 
 目前问题：
 1. math rule reward worker还有超时5秒的情况
-2. megatron 转 hf格式脚本未跑通
+2. 自动megatron转hf并评测

@@ -68,7 +68,7 @@ sft_train:
       tensor_model_parallel_size: 2
       sequence_parallel: true
       pipeline_model_parallel_size: 2
-      use_distributed_optimizer: true
+      use_distributed_optimizer: false
       context_parallel_size: 2
   device_mapping: list(range(0,8))
   infer_batch_size: 2

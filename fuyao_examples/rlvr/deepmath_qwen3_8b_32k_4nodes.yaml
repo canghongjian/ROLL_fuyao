@@ -62,8 +62,8 @@ resume_from_checkpoint: false
 
 
 rollout_batch_size: 64  # prompt
-prompt_length: 2048
-response_length: 32764
+prompt_length: 2048 # note that prompt + response_length should be divided by (cp + tp)
+response_length: 32768 
 
 num_return_sequences_in_group: 8
 ppo_epochs: 1
@@ -138,10 +138,10 @@ actor_train:
       expert_model_parallel_size: 1
       context_parallel_size: 4
       sequence_parallel: true
-      use_distributed_optimizer: true
+      use_distributed_optimizer: false
       recompute_granularity: full
   device_mapping: list(range(0,32))
-  infer_batch_size: 2
+  infer_batch_size: 1
 
 actor_infer:
   model_args:

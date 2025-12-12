@@ -113,7 +113,7 @@ actor_train:
       virtual_pipeline_model_parallel_size: 8
       expert_model_parallel_size: 4
       context_parallel_size: 1
-      use_distributed_optimizer: true
+      use_distributed_optimizer: false
       sequence_parallel: true
       moe_token_dispatcher_type: "alltoall"
       moe_grouped_gemm: true
