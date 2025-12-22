@@ -13,7 +13,7 @@ hydra:
 pretrain: /publicdata/huggingface.co/Qwen/Qwen3-8B
 reward_pretrain: /publicdata/huggingface.co/Qwen/Qwen3-8B
 
-exp_name: ${oc.env:BIFROST_JOB_NAME}_qwen3-8B-rlvr-deepmath
+exp_name: roll_${oc.env:BIFROST_JOB_NAME}_qwen3-8B-rlvr-deepmath
 seed: 42
 local_save_path: /log/roll_output
 logging_dir: ${local_save_path}/logs
@@ -138,7 +138,7 @@ actor_train:
       expert_model_parallel_size: 1
       context_parallel_size: 2
       sequence_parallel: true
-      use_distributed_optimizer: false
+      use_distributed_optimizer: true
       recompute_granularity: full
   device_mapping: list(range(0,8))
   infer_batch_size: 2

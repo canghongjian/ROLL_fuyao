@@ -13,7 +13,7 @@ hydra:
 pretrain: /publicdata/huggingface.co/Qwen/Qwen3-8B
 reward_pretrain: /publicdata/huggingface.co/Qwen/Qwen3-8B
 
-exp_name: roll_${oc.env:BIFROST_JOB_NAME}_qwen3-8B-rlvr-deepmath
+exp_name: ${oc.env:BIFROST_JOB_NAME}_debug
 seed: 42
 local_save_path: /log/roll_output
 logging_dir: ${local_save_path}/logs
@@ -24,14 +24,15 @@ system_envs:
 checkpoint_config:
   type: file_system
   output_dir: ${output_dir}/roll_ckpt
-  convert_then_eval: true # 新增megatron训完后自动转hf并自动提deepinsight任务,注意周期是save steps
+  convert_then_eval: true # 新增megatron训完后自动转hf并自动提deepinsight任务
   base_eval_config_path: fuyao_patch/deepinsight_eval_base_config.json
   keep_megatron_files: false 
   async_upload: false # must be false if set convert then eval to avoid original megatron uploading incompletely
   deepinsight_args:
-    system_envs: ENABLE_THINKING=true EVALS_THREADS=128 JUDGE_THREADS=128 MAX_TOKENS=30000 EVAL_REPEAT_NUM=16 TEMPERATURE=0.7 TOP_P=1 TOP_K=20
+    system_envs: ENABLE_THINKING=true EVALS_THREADS=128 JUDGE_THREADS=128 MAX_TOKENS=8192 EVAL_REPEAT_NUM=8 TEMPERATURE=1.0 TOP_P=0.95
     eval_datasets: aime_2024 aime_2025 math_500 livecodebench_v5 gpqa_diamond
     launch_args: --eval_tp_size 4 --judge_tp_size 4
+
 
 track_with: deepinsight_swanlab  
 tracker_kwargs:  
@@ -43,7 +44,7 @@ tracker_kwargs:
   tags:  # 实验标签  
     - qwen3_8b  
     - rl  
-    - grpo
+    - debug
 
 #track_with: wandb
 #tracker_kwargs:
@@ -60,23 +61,22 @@ tracker_kwargs:
 # tracker_kwargs:
 #   log_dir: ${local_save_path}/tensorboard/roll_exp/agentic_frozen_lake
 
-num_nodes: 2
 num_gpus_per_node: 8
 
-max_steps: 500
-save_steps: 100
+max_steps: 10
+save_steps: 1
 logging_steps: 1
-eval_steps: 20
+eval_steps: -1
 resume_from_checkpoint: false
 
 
-rollout_batch_size: 64  # prompt
+rollout_batch_size: 16  # prompt
 prompt_length: 2048
 response_length: 8192
 
-num_return_sequences_in_group: 8
+num_return_sequences_in_group: 1
 ppo_epochs: 1
-adv_estimator: "grpo"
+adv_estimator: "reinforce"
 use_kl_loss: true
 kl_loss_coef: 0.001
 loss_agg_mode: "seq-mean-token-mean"
@@ -104,19 +104,6 @@ whiten_advantages: true
 # is_num_return_sequences_expand: false
 
 
-validation:
-  data_args:
-    template: qwen3
-    file_name:
-      - data/math_benchmarks.jsonl
-  generating_args:
-    max_new_tokens: ${response_length}
-    top_p: 0.6
-    top_k: 50
-    num_beams: 1
-    temperature: 0.6
-    num_return_sequences: 1
-
 
 actor_train:
   model_args:
@@ -127,7 +114,7 @@ actor_train:
     learning_rate: 1.0e-6
     weight_decay: 0
     per_device_train_batch_size: 1
-    gradient_accumulation_steps: 32
+    gradient_accumulation_steps: 1
     warmup_steps: 20
     num_train_epochs: 50
   data_args:
@@ -147,7 +134,7 @@ actor_train:
       expert_model_parallel_size: 1
       use_distributed_optimizer: true
       recompute_granularity: full
-  device_mapping: list(range(0,16))
+  device_mapping: list(range(0,8))
   infer_batch_size: 4
 
 actor_infer:
@@ -169,7 +156,7 @@ actor_infer:
       mem_fraction_static: 0.7
       load_format: dummy
   num_gpus_per_worker: 2
-  device_mapping: list(range(0,16))
+  device_mapping: list(range(0,8))
   infer_batch_size: 1
 
 reference:
@@ -185,7 +172,7 @@ reference:
       tensor_model_parallel_size: 1
       pipeline_model_parallel_size: 1
       expert_model_parallel_size: 1
-  device_mapping: list(range(0,16))
+  device_mapping: list(range(0,8))
   infer_batch_size: 2
 
 rewards:

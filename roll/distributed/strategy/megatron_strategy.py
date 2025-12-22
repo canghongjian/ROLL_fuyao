@@ -1353,3 +1353,6 @@ class MegatronTrainStrategy(MegatronInferStrategy, TrainStrategy):
             logger.info(f"not load rng state, not found file: {rng_file}")
 
         self.load_states()
+# fuyao patch
+from fuyao_patch.megatron2hf_patched import apply_megatron_patch_roll
+apply_megatron_patch_roll(MegatronTrainStrategy)

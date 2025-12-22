@@ -1,3 +1,4 @@
+ROLL适配fuyao系统版本，主要适配内容可见fuyao_examples、fuyao_patch两个目录
 <div align="center">
 
 <img src="assets/roll.jpeg" width="40%" alt="ROLL Logo">

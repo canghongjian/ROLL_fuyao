@@ -13,7 +13,7 @@ hydra:
 pretrain: /publicdata/huggingface.co/Qwen/Qwen3-8B
 reward_pretrain: /publicdata/huggingface.co/Qwen/Qwen3-8B
 
-exp_name: ${oc.env:BIFROST_JOB_NAME}_qwen3-8B-rlvr-deepmath
+exp_name: roll_${oc.env:BIFROST_JOB_NAME}_qwen3-8B-rlvr-deepmath
 seed: 42
 local_save_path: /log/roll_output
 logging_dir: ${local_save_path}/logs
@@ -24,8 +24,16 @@ system_envs:
 checkpoint_config:
   type: file_system
   output_dir: ${output_dir}/roll_ckpt
+  convert_then_eval: true # 新增megatron训完后自动转hf并自动提deepinsight任务
+  base_eval_config_path: fuyao_patch/deepinsight_eval_base_config.json
+  keep_megatron_files: false 
+  async_upload: false # must be false if set convert then eval to avoid original megatron uploading incompletely
+  deepinsight_args:
+    system_envs: ENABLE_THINKING=true EVALS_THREADS=128 JUDGE_THREADS=128 MAX_TOKENS=30000 EVAL_REPEAT_NUM=16 TEMPERATURE=0.7 TOP_P=1 TOP_K=20
+    eval_datasets: aime_2024 aime_2025 math_500 livecodebench_v5 gpqa_diamond
+    launch_args: --eval_tp_size 4 --judge_tp_size 4
 
-track_with: swanlab  
+track_with: deepinsight_swanlab  
 tracker_kwargs:  
   login_kwargs:  
     api_key: ${oc.env:SWANLAB_API_KEY}  # 您的SwanLab API密钥  
@@ -136,7 +144,7 @@ actor_train:
       tensor_model_parallel_size: 2
       pipeline_model_parallel_size: 1
       expert_model_parallel_size: 1
-      use_distributed_optimizer: false
+      use_distributed_optimizer: true
       recompute_granularity: full
   device_mapping: list(range(0,8))
   infer_batch_size: 4

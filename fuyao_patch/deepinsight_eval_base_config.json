@@ -1,0 +1,10 @@
+{
+    "docker_image": "infra-registry-vpc.cn-wulanchabu.cr.aliyuncs.com/data-infra/fuyao:xpeng-rl-llm-eval-torch280-v4.7",
+    "convert_image": "infra-registry-vpc.cn-wulanchabu.cr.aliyuncs.com/data-infra/fuyao:zhangjh37-251218-0432",    
+    "site_gpu": "fuyao_b1",
+    "queue_gpu": "rc-llmrl-a100",
+    "site_cpu": "fuyao_cpu_c1",
+    "queue_cpu": "rc-perception-cpu",
+    "start_file_path": "plugin/launch_eval.sh",
+    "gpu_type": "a100"
+}

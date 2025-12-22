@@ -20,6 +20,12 @@ from roll.utils.logging import get_logger
 from roll.utils.tracking import create_tracker
 from roll.utils.worker_state import WorkerState
 
+# fuyao patch
+# from roll.distributed.strategy.megatron_strategy import MegatronTrainStrategy
+from fuyao_patch.tracking_patch import apply_tracker_patch
+# from fuyao_patch.megatron2hf_patched import apply_megatron_patch_roll
+apply_tracker_patch()
+
 logger = get_logger()
 
 

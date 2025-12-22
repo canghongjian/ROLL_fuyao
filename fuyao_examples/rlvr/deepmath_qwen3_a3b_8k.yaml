@@ -1,19 +1,12 @@
-defaults:
-  - ../../examples/config/traj_envs@_here_
-  - ../../examples/config/deepspeed_zero@_here_
-  - ../../examples/config/deepspeed_zero2@_here_
-  - ../../examples/config/deepspeed_zero3@_here_
-  - ../../examples/config/deepspeed_zero3_cpuoffload@_here_
-
 hydra:
   run:
     dir: .
   output_subdir: null
 
-pretrain: /publicdata/huggingface.co/Qwen/Qwen3-8B
-reward_pretrain: /publicdata/huggingface.co/Qwen/Qwen3-8B
+pretrain: /publicdata/huggingface.co/Qwen/Qwen3-30B-A3B-Base
+reward_pretrain: /publicdata/huggingface.co/Qwen/Qwen3-30B-A3B-Base
 
-exp_name: roll_${oc.env:BIFROST_JOB_NAME}_qwen3-8B-rlvr-deepmath
+exp_name: roll_${oc.env:BIFROST_JOB_NAME}_qwen3-30BA3B-rlvr-deepmath
 seed: 42
 local_save_path: /log/roll_output
 logging_dir: ${local_save_path}/logs
@@ -24,12 +17,12 @@ system_envs:
 checkpoint_config:
   type: file_system
   output_dir: ${output_dir}/roll_ckpt
-  convert_then_eval: true # 新增megatron训完后自动转hf并自动提deepinsight任务,注意周期是save steps
+  convert_then_eval: true # 新增megatron训完后自动转hf并自动提deepinsight任务
   base_eval_config_path: fuyao_patch/deepinsight_eval_base_config.json
   keep_megatron_files: false 
   async_upload: false # must be false if set convert then eval to avoid original megatron uploading incompletely
   deepinsight_args:
-    system_envs: ENABLE_THINKING=true EVALS_THREADS=128 JUDGE_THREADS=128 MAX_TOKENS=30000 EVAL_REPEAT_NUM=16 TEMPERATURE=0.7 TOP_P=1 TOP_K=20
+    system_envs: ENABLE_THINKING=true EVALS_THREADS=128 JUDGE_THREADS=128 MAX_TOKENS=8192 EVAL_REPEAT_NUM=8 TEMPERATURE=1.0 TOP_P=0.95
     eval_datasets: aime_2024 aime_2025 math_500 livecodebench_v5 gpqa_diamond
     launch_args: --eval_tp_size 4 --judge_tp_size 4
 
@@ -41,26 +34,10 @@ tracker_kwargs:
   logdir: ${output_dir}/swanlog  # 日志存储目录  
   experiment_name: ${exp_name}  # 实验名称  
   tags:  # 实验标签  
-    - qwen3_8b  
-    - rl  
-    - grpo
+    - roll  
+    - rlvr  
+    - qwen3_moe
 
-#track_with: wandb
-#tracker_kwargs:
-#  api_key: ${oc.env:WANDB_API_KEY}
-#  project: roll-agentic
-#  name: ${exp_name}_frozen_lake
-#  notes: "agentic_pipeline"
-#  tags:
-#    - agentic
-#    - roll
-#    - baseline
-
-# track_with: tensorboard
-# tracker_kwargs:
-#   log_dir: ${local_save_path}/tensorboard/roll_exp/agentic_frozen_lake
-
-num_nodes: 2
 num_gpus_per_node: 8
 
 max_steps: 500
@@ -103,20 +80,17 @@ whiten_advantages: true
 # max_running_requests: 256
 # is_num_return_sequences_expand: false
 
-
 validation:
   data_args:
-    template: qwen3
+    template: qwen2_5
     file_name:
       - data/math_benchmarks.jsonl
   generating_args:
-    max_new_tokens: ${response_length}
     top_p: 0.6
     top_k: 50
     num_beams: 1
     temperature: 0.6
     num_return_sequences: 1
-
 
 actor_train:
   model_args:
@@ -143,12 +117,19 @@ actor_train:
     strategy_name: megatron_train
     strategy_config:
       tensor_model_parallel_size: 2
-      pipeline_model_parallel_size: 1
-      expert_model_parallel_size: 1
+      pipeline_model_parallel_size: 2
+      virtual_pipeline_model_parallel_size: 8
+      expert_model_parallel_size: 2
+      context_parallel_size: 2
       use_distributed_optimizer: true
-      recompute_granularity: full
+      sequence_parallel: true
+      moe_token_dispatcher_type: "alltoall"
+      moe_grouped_gemm: true
+      moe_layer_recompute: true
+      recompute_granularity: selective
+      overlap_grad_reduce: true 
   device_mapping: list(range(0,16))
-  infer_batch_size: 4
+  infer_batch_size: 1
 
 actor_infer:
   model_args:
@@ -162,13 +143,13 @@ actor_infer:
     temperature: 0.99
     num_return_sequences: ${num_return_sequences_in_group}
   data_args:
-    template: qwen3
+    template: qwen2_5
   strategy_args:
     strategy_name: sglang
     strategy_config:
       mem_fraction_static: 0.7
       load_format: dummy
-  num_gpus_per_worker: 2
+  num_gpus_per_worker: 4
   device_mapping: list(range(0,16))
   infer_batch_size: 1
 
@@ -178,15 +159,20 @@ reference:
     dtype: bf16
     model_type: ~
   data_args:
-    template: qwen3
+    template: qwen2_5
   strategy_args:
     strategy_name: megatron_infer
     strategy_config:
-      tensor_model_parallel_size: 1
-      pipeline_model_parallel_size: 1
-      expert_model_parallel_size: 1
+      tensor_model_parallel_size: 2
+      pipeline_model_parallel_size: 2
+      virtual_pipeline_model_parallel_size: 8
+      expert_model_parallel_size: 2
+      context_parallel_size: 2
+      sequence_parallel: true
+      moe_token_dispatcher_type: "alltoall"
+      moe_grouped_gemm: true
   device_mapping: list(range(0,16))
-  infer_batch_size: 2
+  infer_batch_size: 1
 
 rewards:
   math_rule:
@@ -196,5 +182,5 @@ rewards:
     data_args:
       template: qwen3
     tag_included: [deepmath_math_rule_20k]
-    world_size: 8
+    world_size: 32
     infer_batch_size: 1
