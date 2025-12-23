@@ -3,8 +3,8 @@ hydra:
     dir: .
   output_subdir: null
 
-pretrain: /publicdata/huggingface.co/Qwen/Qwen3-30B-A3B-Base
-reward_pretrain: /publicdata/huggingface.co/Qwen/Qwen3-30B-A3B-Base
+pretrain: /publicdata/huggingface.co/Qwen/Qwen3-30B-A3B
+reward_pretrain: /publicdata/huggingface.co/Qwen/Qwen3-30B-A3B
 
 exp_name: roll_${oc.env:BIFROST_JOB_NAME}_qwen3-30BA3B-rlvr-deepmath
 seed: 42

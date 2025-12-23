@@ -104,7 +104,7 @@ def run_pipeline(config_path):
         
         if state in ["JOB_COMPLETE"]:
             logger.info("Convert Job Finished Successfully!")
-            if not config['keep_megatron_file'] and config.get('megatron_path'):
+            if not config['keep_megatron_files'] and config.get('megatron_path'):
                 # 删除原megatron文件
                 shutil.rmtree(config['megatron_path'], ignore_errors=True)
                 logger.info(f"remove original megatron path:{config['megatron_path']}")
