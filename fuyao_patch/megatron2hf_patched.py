@@ -79,9 +79,6 @@ def trigger_remote_pipeline(self, save_dir, ckpt_id):
 
         eval_args_str += f" {deepinsight_launch_args} --model-dir {model_dir} {ckpt_id} {deepinsight_eval_datasets}"
 
-        if base_eval_config.get('queue_gpu'):
-            eval_args_str += f" --queue_gpu {base_eval_config.get('queue_gpu')}"
-        
         launch_eval_script = f"cd /eval_client && {deepinsight_system_envs} DEEPINSIGHT_EVAL_ROOT=/eval_client /bin/bash {deepinsight_file_path} {eval_args_str}"
     
     elif ckpt_config.get('eval_type', 'llm') == 'mllm':

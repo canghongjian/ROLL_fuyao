@@ -1,15 +1,15 @@
 defaults:
-  - ../config/traj_envs_gem_math@_here_
+  - ../config/traj_envs_gem_qa@_here_
 
 hydra:
   run:
     dir: .
   output_subdir: null
 
-pretrain: /publicdata/huggingface.co/Qwen/Qwen3-4B
-reward_pretrain: /publicdata/huggingface.co/Qwen/Qwen3-4B
+pretrain: /publicdata/huggingface.co/Qwen/Qwen3-4B-Base
+reward_pretrain: /publicdata/huggingface.co/Qwen/Qwen3-4B-Base
 
-exp_name: roll_${oc.env:BIFROST_JOB_NAME}_qwen3-4B-agentic-8192-code-dapo
+exp_name: roll_${oc.env:BIFROST_JOB_NAME}_qwen3-4B-base-agentic-search-r1
 seed: 42
 local_save_path: /log/roll_output
 logging_dir: ${local_save_path}/logs
@@ -38,7 +38,7 @@ tracker_kwargs:
   experiment_name: ${exp_name}  # 实验名称  
   tags:  # 实验标签  
     - qwen3_4b  
-    - code_dapo  
+    - search_r1  
     - reinforce
 
 num_gpus_per_node: 8
@@ -51,7 +51,7 @@ resume_from_checkpoint: false
 
 rollout_batch_size: 128
 val_batch_size: 128
-sequence_length: 8192
+sequence_length: 12800
 
 advantage_clip: 20
 ppo_epochs: 1
@@ -64,6 +64,7 @@ whiten_advantages: true
 entropy_loss_coef: 0
 max_grad_norm: 1.0
 
+
 actor_train:
   model_args:
     attn_implementation: fa2
@@ -74,10 +75,9 @@ actor_train:
     learning_rate: 1.0e-6
     weight_decay: 0
     per_device_train_batch_size: 1
-    gradient_accumulation_steps: 8
-    warmup_steps: 0
-    warmup_ratio: 0
-    lr_scheduler_type: constant
+    gradient_accumulation_steps: 16
+    warmup_steps: 10
+    lr_scheduler_type: cosine
   strategy_args:
 #    strategy_name: deepspeed_train
 #    strategy_config: ${deepspeed_zero3}
@@ -102,7 +102,7 @@ actor_infer:
     num_beams: 1
     temperature: 0.99
     num_return_sequences: 1
-    stop_strings: ["</code>"]
+    stop_strings: ["</search>"]
   strategy_args:
     strategy_name: vllm
     strategy_config:
@@ -121,36 +121,35 @@ reference:
     strategy_name: hf_infer
     strategy_config: ~
   device_mapping: list(range(0,8))
-  infer_batch_size: 2
+  infer_batch_size: 1
 
 reward_normalization:
   grouping: batch # 可以tags(env_type)/traj_group_id(group)/batch(rollout_batch)... group_by计算reward/adv
   method: identity # asym_clip / identity / mean_std
 
 train_env_manager:
-  max_env_num_per_worker: 16
+  max_env_num_per_worker: 32
   num_env_groups: 128
   # under the same group, the env config and env seed are ensured to be equal
   group_size: 1
-  tags: [dapo_17k_with_python_code]
+  tags: [HotpotQA_with_search]
   num_groups_partition: [128] # If not set, all env names divide nums equally. Under the same group, the env config and env seed (prompt) are equal in each generation
 
 val_env_manager:
   max_env_num_per_worker: 32
   num_env_groups: 128
   group_size: 1 # should be set to 1 because val temperature is set to 0 and same prompt leads to same output
-  tags: [dapo_17k_with_python_code]
+  tags: [HotpotQA_with_search]
   num_groups_partition: [128] # TODO: If not set, all env names divide nums equally. Under the same group, the env config and env seed (prompt) are equal in each generation
 
 
 # Here, you can override variables defined in the imported envs. max_tokens_per_step: 128 in custom_env.SimpleSokoban, here replaced by 64
 max_tokens_per_step: 4096
 
-math_agent_system_template: Please reason step by step, and put your final answer within '\\boxed{}', e.g. \\boxed{{A}}..
-math_agent_template: "{observation}\nEnsure that your response includes the format of '\\boxed{{answer}}', e.g. \\boxed{{A}}."
 custom_envs:
-  dapo_17k:
-    ${gem_math.dapo_17k}
-  dapo_17k_with_python_code:
-    ${gem_math.dapo_17k_with_python_code}
-
+  HotpotQA:
+    ${gem_qa.HotpotQA}
+  HotpotQA_with_mcp:
+    ${gem_qa.HotpotQA_with_mcp}
+  HotpotQA_with_search:
+    ${gem_qa.HotpotQA_with_search}

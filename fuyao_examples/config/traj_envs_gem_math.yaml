@@ -99,7 +99,8 @@ gem_math:
     agent_system_template: ${math_agent_system_template}
     agent_template: ${math_agent_template}
     env_config:
-      dataset_name: /root/workspace/zhangjh37@xiaopeng.com/data/dapo_math_17k_processed
+      dataset_name: /workspace/zhangjh37@xiaopeng.com/data/dapo_math_17k_processed
+      split: train
       question_key: prompt
       answer_key: solution
   dapo_17k_with_python_code:
@@ -111,7 +112,8 @@ gem_math:
     agent_template: ${math_agent_template}
     env_config:
       max_steps: ${max_actions_per_traj}
-      dataset_name: /root/workspace/zhangjh37@xiaopeng.com/data/dapo_math_17k_processed
+      dataset_name: /workspace/zhangjh37@xiaopeng.com/data/dapo_math_17k_processed
+      split: train
       question_key: prompt
       answer_key: solution
     tool_wrapper:
