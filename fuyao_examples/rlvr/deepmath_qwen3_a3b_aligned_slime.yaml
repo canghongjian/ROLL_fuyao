@@ -18,7 +18,7 @@ system_envs:
 checkpoint_config:
   type: file_system
   output_dir: ${output_dir}/roll_ckpt
-  convert_then_eval: true # 新增megatron训完后自动转hf并自动提deepinsight任务
+  convert_then_eval: false # 新增megatron训完后自动转hf并自动提deepinsight任务
   base_eval_config_path: fuyao_patch/deepinsight_eval_base_config.json
   keep_megatron_files: false 
   async_upload: false # must be false if set convert then eval to avoid original megatron uploading incompletely
@@ -117,11 +117,11 @@ actor_train:
   strategy_args:
     strategy_name: megatron_train
     strategy_config:
-      tensor_model_parallel_size: 4
+      tensor_model_parallel_size: 2
       pipeline_model_parallel_size: 1
       virtual_pipeline_model_parallel_size: null
-      expert_model_parallel_size: 8
-      context_parallel_size: 2
+      expert_model_parallel_size: 4
+      context_parallel_size: 4
       use_distributed_optimizer: true
       sequence_parallel: true
       moe_token_dispatcher_type: "alltoall"
@@ -165,7 +165,7 @@ reference:
       tensor_model_parallel_size: 2
       pipeline_model_parallel_size: 1
       expert_model_parallel_size: 4
-      context_parallel_size: 2
+      context_parallel_size: 4
       sequence_parallel: true
       moe_token_dispatcher_type: "alltoall"
       moe_grouped_gemm: true
