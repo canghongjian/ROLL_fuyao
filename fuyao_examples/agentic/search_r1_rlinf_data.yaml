@@ -21,7 +21,7 @@ system_envs:
 checkpoint_config:
   type: file_system
   output_dir: ${output_dir}/roll_ckpt
-  # convert_then_eval: true # 新增megatron训完后自动转hf并自动提deepinsight任务,注意周期是save steps
+  convert_then_eval: false # 新增megatron训完后自动转hf并自动提deepinsight任务,注意周期是save steps
   # base_eval_config_path: fuyao_patch/deepinsight_eval_base_config.json
   # keep_megatron_files: false 
   # async_upload: false # must be false if set convert then eval to avoid original megatron uploading incompletely
@@ -45,7 +45,7 @@ tracker_kwargs:
 num_gpus_per_node: 8
 
 max_steps: 1024
-save_steps: 10000
+save_steps: 100
 logging_steps: 1
 eval_steps: 10
 resume_from_checkpoint: false
@@ -133,14 +133,14 @@ train_env_manager:
   num_env_groups: 128
   # under the same group, the env config and env seed are ensured to be equal
   group_size: 1
-  tags: [nq_search_r1_train]
+  tags: [Rlinf_search_r1]
   num_groups_partition: [128] # If not set, all env names divide nums equally. Under the same group, the env config and env seed (prompt) are equal in each generation
 
 val_env_manager:
   max_env_num_per_worker: 32
   num_env_groups: 128
   group_size: 1 # should be set to 1 because val temperature is set to 0 and same prompt leads to same output
-  tags: [HotpotQA_with_search]
+  tags: [musique_search_r1_val]
   num_groups_partition: [128] # TODO: If not set, all env names divide nums equally. Under the same group, the env config and env seed (prompt) are equal in each generation
 
 
@@ -148,11 +148,9 @@ val_env_manager:
 max_tokens_per_step: 4096
 
 custom_envs:
-  HotpotQA:
-    ${gem_qa.HotpotQA}
-  HotpotQA_with_mcp:
-    ${gem_qa.HotpotQA_with_mcp}
-  nq_search_r1_train:
-    ${gem_qa.nq_search_r1_train}
-  HotpotQA_with_search:
-    ${gem_qa.HotpotQA_with_search}
+  Rlinf_search_r1:
+    ${gem_qa.Rlinf_search_r1}
+  Rlinf_search_r1_val:
+    ${gem_qa.Rlinf_search_r1_val}
+  musique_search_r1_val:
+    ${gem_qa.musique_search_r1_val}

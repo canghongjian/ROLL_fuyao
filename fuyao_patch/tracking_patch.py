@@ -19,7 +19,7 @@ class DeepInsightSwanlabTracker(SwanlabTracker):
             "time/step_generate": "deepinsight_infra/rollout_step_time",
             "time/actor_train/model_update/total": "deepinsight_infra/sync_weight_time",
             "time/step_total": "deepinsight_infra/step_time",
-            "system/time/tps_mean": "deepinsight_infra/throughput",
+            "system/tps_gpu": "deepinsight_infra/throughput",
 
             # 算法指标
             "critic/rewards/mean": "deepinsight_algorithm/reward",

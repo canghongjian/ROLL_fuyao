@@ -3,8 +3,8 @@
     "convert_image": "infra-registry-vpc.cn-wulanchabu.cr.aliyuncs.com/data-infra/fuyao:zhangjh37-251218-0432",    
     "site_gpu": "fuyao_b1",
     "queue_gpu": "rc-llmrl-a100",
-    "site_cpu": "fuyao_cpu_c1",
-    "queue_cpu": "rc-perception-cpu",
+    "site_cpu": "fuyao_b1",
+    "queue_cpu": "rc-cpu",
     "start_file_path": "/eval_client/fuyao_unified_two_phase.sh",
     "gpu_type": "a100"
 }

@@ -11,6 +11,7 @@ seed: 42
 local_save_path: /log/roll_output
 logging_dir: ${local_save_path}/logs
 output_dir: ${oc.env:CPFS_DIR}/roll_output/${exp_name}
+save_logging_board_dir: ${output_dir}/data_saved
 system_envs:
   USE_MODELSCOPE: '1'
 
@@ -101,7 +102,7 @@ actor_train:
     learning_rate: 1.0e-6
     weight_decay: 0
     per_device_train_batch_size: 1
-    gradient_accumulation_steps: 32
+    gradient_accumulation_steps: 64
     warmup_steps: 20
     num_train_epochs: 50
   data_args:
@@ -116,10 +117,10 @@ actor_train:
   strategy_args:
     strategy_name: megatron_train
     strategy_config:
-      tensor_model_parallel_size: 2
-      pipeline_model_parallel_size: 2
-      virtual_pipeline_model_parallel_size: 8
-      expert_model_parallel_size: 4
+      tensor_model_parallel_size: 4
+      pipeline_model_parallel_size: 1
+      virtual_pipeline_model_parallel_size: null
+      expert_model_parallel_size: 8
       context_parallel_size: 2
       use_distributed_optimizer: true
       sequence_parallel: true
@@ -162,7 +163,7 @@ reference:
     strategy_name: megatron_infer
     strategy_config:
       tensor_model_parallel_size: 2
-      pipeline_model_parallel_size: 2
+      pipeline_model_parallel_size: 1
       expert_model_parallel_size: 4
       context_parallel_size: 2
       sequence_parallel: true

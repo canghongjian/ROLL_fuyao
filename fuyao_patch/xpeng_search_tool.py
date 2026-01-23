@@ -49,4 +49,4 @@ class XpengSearchTool(GEMSearchTool):
             title = content.split("\n")[0]
             text = "\n".join(content.split("\n")[1:])
             format_reference += f"Doc {idx+1}(Title: {title}) {text}\n"
-        format_reference
+        return format_reference

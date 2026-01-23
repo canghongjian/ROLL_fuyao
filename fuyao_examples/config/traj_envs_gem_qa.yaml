@@ -111,11 +111,100 @@ gem_qa:
       wrapper_args:
         tool_reward: 0.0
         tool_success_reward: 0.0
+        max_tool_uses: 1
+      tool_configs:
+        - tool_id: xpeng_search
+          tool_args:
+            search_url: http://10.1.33.45:8000/retrieve
+  Rlinf_search_r1:
+    env_type: "roll_qa"
+    max_steps: ${max_actions_per_traj}
+    max_tokens_per_step: ${max_tokens_per_step}
+    env_manager_cls: ${env_manager_cls}
+    agent_system_template: ${qa_agent_system_template}
+    agent_template: ${qa_agent_template}
+    max_env_step_concurrent: 10
+    env_config:
+      dataset_name: /workspace/zhangjh37@xiaopeng.com/data/rlinf_searchr1_data/train_formatted_hf
+      split: train
+      question_key: question
+      answer_key: answer
+    tool_wrapper:
+      wrapper_args:
+        tool_reward: 0.0
+        tool_success_reward: 0.0
         max_tool_uses: 2
       tool_configs:
-        - tool_id: search
+        - tool_id: xpeng_search
           tool_args:
-            search_url: http://10.1.33.30:8000/retrieve
+            search_url: http://10.1.33.45:8000/retrieve
+  Rlinf_search_r1_val:
+    env_type: roll_qa
+    max_steps: ${max_actions_per_traj}
+    max_tokens_per_step: ${max_tokens_per_step}
+    env_manager_cls: ${env_manager_cls}
+    agent_system_template: ${qa_agent_system_template}
+    agent_template: ${qa_agent_template}
+    max_env_step_concurrent: 10
+    env_config:
+      dataset_name: /workspace/zhangjh37@xiaopeng.com/data/rlinf_searchr1_data/val_formatted_hf
+      split: val
+      question_key: question
+      answer_key: answer
+    tool_wrapper:
+      wrapper_args:
+        tool_reward: 0.0
+        tool_success_reward: 0.0
+        max_tool_uses: 2
+      tool_configs:
+      - tool_id: xpeng_search
+        tool_args:
+          search_url: http://10.1.33.45:8000/retrieve
+  nq_search_r1_train:
+    env_type: roll_qa
+    max_steps: ${max_actions_per_traj}
+    max_tokens_per_step: ${max_tokens_per_step}
+    env_manager_cls: ${env_manager_cls}
+    agent_system_template: ${qa_agent_system_template}
+    agent_template: ${qa_agent_template}
+    max_env_step_concurrent: 10
+    env_config:
+      dataset_name: /workspace/zhangjh37@xiaopeng.com/code/Search-R1/data/nq_search/
+      split: train
+      question_key: question
+      answer_key: golden_answers
+    tool_wrapper:
+      wrapper_args:
+        tool_reward: 0.0
+        tool_success_reward: 0.0
+        max_tool_uses: 2
+      tool_configs:
+      - tool_id: xpeng_search
+        tool_args:
+          search_url: http://10.1.33.45:8000/retrieve
+  musique_search_r1_val: # 数据格式目前有问题
+    env_type: roll_qa
+    max_steps: ${max_actions_per_traj}
+    max_tokens_per_step: ${max_tokens_per_step}
+    env_manager_cls: ${env_manager_cls}
+    agent_system_template: ${qa_agent_system_template}
+    agent_template: ${qa_agent_template}
+    max_env_step_concurrent: 10
+    env_config:
+      dataset_name: /workspace/zhangjh37@xiaopeng.com/tmp/data/musique_hotpotqa_dataset
+      split: test
+      question_key: problem
+      answer_key: answer
+    tool_wrapper:
+      wrapper_args:
+        tool_reward: 0.0
+        tool_success_reward: 0.0
+        max_tool_uses: 2
+      tool_configs:
+      - tool_id: xpeng_search
+        tool_args:
+          search_url: http://10.1.33.45:8000/retrieve
+
 
 qa_agent_system_template: You're a helpful assistant.
 qa_agent_template: "{observation}"

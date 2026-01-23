@@ -74,8 +74,8 @@ def trigger_remote_pipeline(self, save_dir, ckpt_id):
 
         eval_args_str += f" --site_gpu {base_eval_config.get('site_gpu', 'fuyao_b1')}"
         eval_args_str += f" --queue_gpu {base_eval_config.get('queue_gpu', 'rc-llmrl-a100')}"
-        eval_args_str += f" --site_cpu {base_eval_config.get('site_cpu', 'fuyao_cpu_c1')}"
-        eval_args_str += f" --queue_cpu {base_eval_config.get('queue_cpu', 'rc-perception-cpu')}"
+        eval_args_str += f" --site_cpu {base_eval_config.get('site_cpu', 'fuyao_b1')}"
+        eval_args_str += f" --queue_cpu {base_eval_config.get('queue_cpu', 'rc-cpu')}"
 
         eval_args_str += f" {deepinsight_launch_args} --model-dir {model_dir} {ckpt_id} {deepinsight_eval_datasets}"
 
@@ -98,7 +98,7 @@ def trigger_remote_pipeline(self, save_dir, ckpt_id):
     # 1. 准备 Pipeline 配置数据
     pipeline_config = {
         "ckpt_id": ckpt_id,
-        "experiment": base_eval_config.get('experiment', 'rc-perception'),
+        "experiment": base_eval_config.get('experiment', 'zhangjh37/llm_rl'),
         "convert_then_eval": self.worker_config.checkpoint_config.get('convert_then_eval', True),
         "megatron_path": megatron_path,
         "hf_path": hf_path,
@@ -112,7 +112,7 @@ def trigger_remote_pipeline(self, save_dir, ckpt_id):
             "partition": base_eval_config.get('queue_gpu', 'rc-llmrl-a100'),
             "node_count": base_eval_config.get('node_count', 1),
             "gpus_per_node": base_eval_config.get('gpus_per_node', 8),
-            "experiment": base_eval_config.get('experiment', 'rc-perception'),
+            "experiment": base_eval_config.get('experiment', 'zhangjh37/llm_rl'),
             "start_command": f"bash fuyao_examples/convert_megatron.sh --ckpt-path {megatron_path} --output-path {hf_path}",
             "artifact_path": "/code", # to be verified
             "label": f"{bifrost_job_name}_convert_{ckpt_id}",
@@ -129,7 +129,7 @@ def trigger_remote_pipeline(self, save_dir, ckpt_id):
             "node_count": base_eval_config.get('node_count', 2),
             "gpus_per_node": base_eval_config.get('gpus_per_node', 8),
             "gpu_type": base_eval_config.get('gpu_type', 'a100'),
-            "experiment": base_eval_config.get('experiment', 'rc-perception'),
+            "experiment": base_eval_config.get('experiment', 'zhangjh37/llm_rl'),
             "start_command": launch_eval_script,
             "artifact_path": None,
             "label": f"{bifrost_job_name}_eval_{ckpt_id}",
