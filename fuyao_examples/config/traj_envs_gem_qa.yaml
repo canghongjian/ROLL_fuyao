@@ -111,7 +111,7 @@ gem_qa:
       wrapper_args:
         tool_reward: 0.0
         tool_success_reward: 0.0
-        max_tool_uses: 1
+        max_tool_uses: 2
       tool_configs:
         - tool_id: xpeng_search
           tool_args:

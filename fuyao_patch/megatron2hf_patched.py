@@ -34,8 +34,7 @@ def apply_megatron_patch_roll(target_class):
         # 只在 Rank 0 且配置开启时执行
         # logger.info(f"dist.is_initialized():{dist.is_initialized()}, dist.get_rank():{dist.get_rank()}")
         if dist.get_rank() == 0:
-            if self.worker_config.checkpoint_config.get('convert_then_eval', False):
-                trigger_remote_pipeline(self, save_dir, ckpt_id)
+            trigger_remote_pipeline(self, save_dir, ckpt_id)
         
         return metrics
 

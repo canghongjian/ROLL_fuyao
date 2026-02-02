@@ -10,8 +10,8 @@ hydra:
     dir: .
   output_subdir: null
 
-pretrain: /publicdata/huggingface.co/Qwen/Qwen3-8B
-reward_pretrain: /publicdata/huggingface.co/Qwen/Qwen3-8B
+pretrain: /dataset_rc_b1/llm_train_sft/lijl42/SFT_Qwen3_8B_Base/qwen3_8b_base_ot3_sft_0105/global_step_4450/huggingface
+reward_pretrain: /dataset_rc_b1/llm_train_sft/lijl42/SFT_Qwen3_8B_Base/qwen3_8b_base_ot3_sft_0105/global_step_4450/huggingface
 
 exp_name: roll_${oc.env:BIFROST_JOB_NAME}_qwen3-8B-32k-rlvr-deepmath
 seed: 42
@@ -24,7 +24,7 @@ system_envs:
 checkpoint_config:
   type: file_system
   output_dir: ${output_dir}/roll_ckpt
-  convert_then_eval: true # 新增megatron训完后自动转hf并自动提deepinsight任务
+  convert_then_eval: false # 新增megatron训完后自动转hf并自动提deepinsight任务
   base_eval_config_path: fuyao_patch/deepinsight_eval_base_config.json
   keep_megatron_files: false 
   async_upload: false # must be false if set convert then eval to avoid original megatron uploading incompletely
@@ -71,7 +71,7 @@ resume_from_checkpoint: false
 
 rollout_batch_size: 32  # prompt
 prompt_length: 1024 # note that prompt + response_length should be divided by (cp + tp)
-response_length: 32768 
+response_length: 31000 
 
 num_return_sequences_in_group: 8
 ppo_epochs: 1

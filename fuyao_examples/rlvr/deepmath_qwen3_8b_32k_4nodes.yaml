@@ -24,14 +24,14 @@ system_envs:
 checkpoint_config:
   type: file_system
   output_dir: ${output_dir}/roll_ckpt
-  convert_then_eval: true # 新增megatron训完后自动转hf并自动提deepinsight任务
+  convert_then_eval: false # 新增megatron训完后自动转hf并自动提deepinsight任务
   base_eval_config_path: fuyao_patch/deepinsight_eval_base_config.json
   keep_megatron_files: false 
   async_upload: false # must be false if set convert then eval to avoid original megatron uploading incompletely
-  deepinsight_args:
-    system_envs: ENABLE_THINKING=true EVALS_THREADS=128 JUDGE_THREADS=128 MAX_TOKENS=30000 EVAL_REPEAT_NUM=16 TEMPERATURE=0.7 TOP_P=1 TOP_K=20
-    eval_datasets: aime_2024 aime_2025 math_500 livecodebench_v5 gpqa_diamond
-    launch_args: --eval_tp_size 4 --judge_tp_size 4
+  # deepinsight_args:
+  #   system_envs: ENABLE_THINKING=true EVALS_THREADS=128 JUDGE_THREADS=128 MAX_TOKENS=30000 EVAL_REPEAT_NUM=16 TEMPERATURE=0.7 TOP_P=1 TOP_K=20
+  #   eval_datasets: aime_2024 aime_2025 math_500 livecodebench_v5 gpqa_diamond
+  #   launch_args: --eval_tp_size 4 --judge_tp_size 4
 
 track_with: deepinsight_swanlab  
 tracker_kwargs:  
