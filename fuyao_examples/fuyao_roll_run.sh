@@ -149,13 +149,13 @@ echo -e "\n===== Step 5: Configure cluster settings ====="
 get_storage_path() {
     case "$FUYAO_CLUSTER" in
         "fuyao-sh-b1"|"fuyao-ppu-sh"|"fuyao-b1")
-            echo "/dataset_rc_b1"
+            echo "/dataset_rc_llmrl"
             ;;
         "fuyao-cpu-c1"|"fuyao-ppu-c1"|"fuyao-ppu-c2"|"fuyao-ppu-c3"|"fuyao-c1"|"fuyao-c2"|"fuyao-c3")
             echo "/dataset-cpfs3-rc"
             ;;
         *)
-            echo "/dataset_rc_b1"  # 未知集群默认路径
+            echo "/dataset_rc_llmrl"  # 未知集群默认路径
             ;;
     esac
 }

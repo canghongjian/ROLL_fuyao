@@ -10,10 +10,12 @@ hydra:
     dir: .
   output_subdir: null
 
-pretrain: /dataset_rc_b1/llm_train_sft/lijl42/SFT_Qwen3_8B_Base/qwen3_8b_base_ot3_sft_0105/global_step_4450/huggingface
-reward_pretrain: /dataset_rc_b1/llm_train_sft/lijl42/SFT_Qwen3_8B_Base/qwen3_8b_base_ot3_sft_0105/global_step_4450/huggingface
+# pretrain: /dataset_rc_llmrl/llm_train_sft/lijl42/SFT_Qwen3_8B_Base/qwen3_8b_base_ot3_sft_0105/global_step_4450/huggingface
+# reward_pretrain: /dataset_rc_llmrl/llm_train_sft/lijl42/SFT_Qwen3_8B_Base/qwen3_8b_base_ot3_sft_0105/global_step_4450/huggingface
+pretrain: /publicdata/huggingface.co/Qwen/Qwen3-8B
+reward_pretrain: /publicdata/huggingface.co/Qwen/Qwen3-8B
 
-exp_name: roll_${oc.env:BIFROST_JOB_NAME}_qwen3-8B-32k-rlvr-deepmath
+exp_name: roll_${oc.env:BIFROST_JOB_NAME}_qwen3-8B-32k-h200-rlvr-deepmath
 seed: 42
 local_save_path: /log/roll_output
 logging_dir: ${local_save_path}/logs
@@ -149,6 +151,7 @@ actor_train:
       use_distributed_optimizer: true
       recompute_granularity: full
   device_mapping: list(range(0,16))
+  use_remove_padding: true
   infer_batch_size: 1
 
 actor_infer:
@@ -189,6 +192,7 @@ reference:
       context_parallel_size: 2
       sequence_parallel: true
   device_mapping: list(range(0,16))
+  use_remove_padding: true
   infer_batch_size: 1
 
 rewards:

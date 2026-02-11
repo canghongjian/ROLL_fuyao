@@ -42,7 +42,7 @@ resume_from_checkpoint: false
 
 sequence_length: 17000
 
-pretrain: /dataset_rc_b1/base_models_for_ft/qwen3_8b_base
+pretrain: /dataset_rc_llmrl/base_models_for_ft/qwen3_8b_base
 
 # sft related 
 # system_key: system_prompt # use the default system prompt in the tokenizer tmplate if not provided

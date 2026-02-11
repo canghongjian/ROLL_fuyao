@@ -30,7 +30,7 @@ checkpoint_config:
   eval_type: mllm
   deepinsight_args:
     eval_datasets: MMMU_DEV_VAL MathVerse_MINI MathVista_MINI CountBenchQA CountQA_test RefCOCO_g_test RefCOCO_plus_test RefCOCO_test
-    launch_args: --eval-tp-size 4 --judge-model-path /publicdata/huggingface.co/Qwen/Qwen2.5-72B-Instruct --judge-tp-size 8 --lmu-data /dataset_rc_b1/DeepInsight --model-seed 42 --sample-ratio 1 --api-nproc 8 --temperature 0 --top-p 0.9 --top-k 20 --max-tokens 8192 --presence-penalty 0 --frequency-penalty 0 --deepinsight-eval-root /eval_client
+    launch_args: --eval-tp-size 4 --judge-model-path /publicdata/huggingface.co/Qwen/Qwen2.5-72B-Instruct --judge-tp-size 8 --lmu-data /dataset_rc_llmrl/DeepInsight --model-seed 42 --sample-ratio 1 --api-nproc 8 --temperature 0 --top-p 0.9 --top-k 20 --max-tokens 8192 --presence-penalty 0 --frequency-penalty 0 --deepinsight-eval-root /eval_client
 
 track_with: deepinsight_swanlab  
 tracker_kwargs:  

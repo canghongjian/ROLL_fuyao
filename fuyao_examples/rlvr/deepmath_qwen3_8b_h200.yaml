@@ -1,19 +1,23 @@
+defaults:
+  - ../../examples/config/traj_envs@_here_
+  - ../../examples/config/deepspeed_zero@_here_
+  - ../../examples/config/deepspeed_zero2@_here_
+  - ../../examples/config/deepspeed_zero3@_here_
+  - ../../examples/config/deepspeed_zero3_cpuoffload@_here_
+
 hydra:
   run:
     dir: .
   output_subdir: null
 
-# pretrain: /publicdata/huggingface.co/Qwen/Qwen3-30B-A3B
-# reward_pretrain: /publicdata/huggingface.co/Qwen/Qwen3-30B-A3B
-pretrain: /dataset_rc_llmrl/llm_train_sft/lisy23/SFT_Qwen3_A3B_Base/qwen3_a3b_base_ot3_sft_0202_17k_bs16_mbs2_fuse_8e-5_64gpus/global_step_2225/huggingface
-reward_pretrain: /dataset_rc_llmrl/llm_train_sft/lisy23/SFT_Qwen3_A3B_Base/qwen3_a3b_base_ot3_sft_0202_17k_bs16_mbs2_fuse_8e-5_64gpus/global_step_2225/huggingface
+pretrain: /publicdata-wl/huggingface.co/Qwen/Qwen3-8B
+reward_pretrain: /publicdata-wl/huggingface.co/Qwen/Qwen3-8B
 
-exp_name: roll_${oc.env:BIFROST_JOB_NAME}_qwen3-30BA3B-jl-ckpt-rlvr-deepmath
+exp_name: roll_${oc.env:BIFROST_JOB_NAME}_qwen3-8B-32k-h200-rlvr-deepmath
 seed: 42
 local_save_path: /log/roll_output
 logging_dir: ${local_save_path}/logs
 output_dir: ${oc.env:CPFS_DIR}/roll_output/${exp_name}
-# save_logging_board_dir: ${output_dir}/data_saved
 system_envs:
   USE_MODELSCOPE: '1'
 
@@ -25,7 +29,7 @@ checkpoint_config:
   keep_megatron_files: false 
   async_upload: false # must be false if set convert then eval to avoid original megatron uploading incompletely
   deepinsight_args:
-    system_envs: ENABLE_THINKING=true EVALS_THREADS=128 JUDGE_THREADS=128 MAX_TOKENS=8192 EVAL_REPEAT_NUM=8 TEMPERATURE=1.0 TOP_P=0.95
+    system_envs: ENABLE_THINKING=true EVALS_THREADS=128 JUDGE_THREADS=128 MAX_TOKENS=30000 EVAL_REPEAT_NUM=16 TEMPERATURE=0.7 TOP_P=1 TOP_K=20
     eval_datasets: aime_2024 aime_2025 math_500 livecodebench_v5 gpqa_diamond
     launch_args: --eval_tp_size 4 --judge_tp_size 4
 
@@ -37,9 +41,24 @@ tracker_kwargs:
   logdir: ${output_dir}/swanlog  # 日志存储目录  
   experiment_name: ${exp_name}  # 实验名称  
   tags:  # 实验标签  
-    - roll  
-    - rlvr  
-    - qwen3_moe
+    - qwen3_8b  
+    - deepmath  
+    - grpo
+
+#track_with: wandb
+#tracker_kwargs:
+#  api_key: ${oc.env:WANDB_API_KEY}
+#  project: roll-agentic
+#  name: ${exp_name}_frozen_lake
+#  notes: "agentic_pipeline"
+#  tags:
+#    - agentic
+#    - roll
+#    - baseline
+
+# track_with: tensorboard
+# tracker_kwargs:
+#   log_dir: ${local_save_path}/tensorboard/roll_exp/agentic_frozen_lake
 
 num_gpus_per_node: 8
 
@@ -51,8 +70,8 @@ resume_from_checkpoint: false
 
 
 rollout_batch_size: 32  # prompt
-prompt_length: 1024
-response_length: 31000
+prompt_length: 1024 # note that prompt + response_length should be divided by (cp + tp)
+response_length: 31000 
 
 num_return_sequences_in_group: 8
 ppo_epochs: 1
@@ -83,17 +102,20 @@ whiten_advantages: true
 # max_running_requests: 256
 # is_num_return_sequences_expand: false
 
+
 validation:
   data_args:
-    template: qwen2_5
+    template: qwen3
     file_name:
       - data/math_benchmarks.jsonl
   generating_args:
+    max_new_tokens: ${response_length}
     top_p: 0.6
     top_k: 50
     num_beams: 1
     temperature: 0.6
     num_return_sequences: 1
+
 
 actor_train:
   model_args:
@@ -110,7 +132,7 @@ actor_train:
   data_args:
     template: qwen3
     file_name:
-      - /workspace/zhangjh37@xiaopeng.com/tmp/deepmath_math_rule_20k.jsonl
+      - /workspace-wl/zhangjh37@xiaopeng.com/tmp/deepmath_math_rule_20k.jsonl
     domain_interleave_probs:
       math_rule: 1.0
     messages: messages
@@ -119,19 +141,15 @@ actor_train:
   strategy_args:
     strategy_name: megatron_train
     strategy_config:
-      tensor_model_parallel_size: 4
+      tensor_model_parallel_size: 2
       pipeline_model_parallel_size: 1
-      virtual_pipeline_model_parallel_size: null
-      expert_model_parallel_size: 8
-      expert_tensor_parallel_size: 1
+      expert_model_parallel_size: 1
       context_parallel_size: 2
-      use_distributed_optimizer: true
       sequence_parallel: true
-      moe_token_dispatcher_type: "alltoall"
-      moe_grouped_gemm: true
-      moe_layer_recompute: true
+      use_distributed_optimizer: true
+      recompute_granularity: full
+  device_mapping: list(range(0,16))
   use_remove_padding: true
-  device_mapping: list(range(0,32))
   infer_batch_size: 1
 
 actor_infer:
@@ -146,15 +164,14 @@ actor_infer:
     temperature: 0.99
     num_return_sequences: ${num_return_sequences_in_group}
   data_args:
-    template: qwen2_5
+    template: qwen3
   strategy_args:
     strategy_name: sglang
     strategy_config:
       mem_fraction_static: 0.7
       load_format: dummy
-  num_gpus_per_worker: 4
-  use_remove_padding: true
-  device_mapping: list(range(0,32))
+  num_gpus_per_worker: 2
+  device_mapping: list(range(0,16))
   infer_batch_size: 1
 
 reference:
@@ -163,19 +180,16 @@ reference:
     dtype: bf16
     model_type: ~
   data_args:
-    template: qwen2_5
+    template: qwen3
   strategy_args:
     strategy_name: megatron_infer
     strategy_config:
-      tensor_model_parallel_size: 4
+      tensor_model_parallel_size: 2
       pipeline_model_parallel_size: 1
-      expert_model_parallel_size: 8
-      expert_tensor_parallel_size: 1
+      expert_model_parallel_size: 1
       context_parallel_size: 2
       sequence_parallel: true
-      moe_token_dispatcher_type: "alltoall"
-      moe_grouped_gemm: true
-  device_mapping: list(range(0,32))
+  device_mapping: list(range(0,16))
   use_remove_padding: true
   infer_batch_size: 1
 
@@ -187,5 +201,5 @@ rewards:
     data_args:
       template: qwen3
     tag_included: [deepmath_math_rule_20k]
-    world_size: 32
+    world_size: 16
     infer_batch_size: 1

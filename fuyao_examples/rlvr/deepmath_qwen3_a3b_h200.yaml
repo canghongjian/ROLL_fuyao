@@ -3,17 +3,15 @@ hydra:
     dir: .
   output_subdir: null
 
-# pretrain: /publicdata/huggingface.co/Qwen/Qwen3-30B-A3B
-# reward_pretrain: /publicdata/huggingface.co/Qwen/Qwen3-30B-A3B
-pretrain: /dataset_rc_llmrl/llm_train_sft/lisy23/SFT_Qwen3_A3B_Base/qwen3_a3b_base_ot3_sft_0202_17k_bs16_mbs2_fuse_8e-5_64gpus/global_step_2225/huggingface
-reward_pretrain: /dataset_rc_llmrl/llm_train_sft/lisy23/SFT_Qwen3_A3B_Base/qwen3_a3b_base_ot3_sft_0202_17k_bs16_mbs2_fuse_8e-5_64gpus/global_step_2225/huggingface
+pretrain: /publicdata-wl/huggingface.co/Qwen/Qwen3-30B-A3B
+reward_pretrain: /publicdata-wl/huggingface.co/Qwen/Qwen3-30B-A3B
 
-exp_name: roll_${oc.env:BIFROST_JOB_NAME}_qwen3-30BA3B-jl-ckpt-rlvr-deepmath
+exp_name: roll_${oc.env:BIFROST_JOB_NAME}_qwen3-30BA3B-h200-rlvr-deepmath
 seed: 42
 local_save_path: /log/roll_output
 logging_dir: ${local_save_path}/logs
 output_dir: ${oc.env:CPFS_DIR}/roll_output/${exp_name}
-# save_logging_board_dir: ${output_dir}/data_saved
+save_logging_board_dir: ${output_dir}/data_saved
 system_envs:
   USE_MODELSCOPE: '1'
 
@@ -52,7 +50,7 @@ resume_from_checkpoint: false
 
 rollout_batch_size: 32  # prompt
 prompt_length: 1024
-response_length: 31000
+response_length: 32768
 
 num_return_sequences_in_group: 8
 ppo_epochs: 1
@@ -110,7 +108,7 @@ actor_train:
   data_args:
     template: qwen3
     file_name:
-      - /workspace/zhangjh37@xiaopeng.com/tmp/deepmath_math_rule_20k.jsonl
+      - /workspace-wl/zhangjh37@xiaopeng.com/tmp/deepmath_math_rule_20k.jsonl
     domain_interleave_probs:
       math_rule: 1.0
     messages: messages
@@ -119,12 +117,11 @@ actor_train:
   strategy_args:
     strategy_name: megatron_train
     strategy_config:
-      tensor_model_parallel_size: 4
+      tensor_model_parallel_size: 2
       pipeline_model_parallel_size: 1
       virtual_pipeline_model_parallel_size: null
-      expert_model_parallel_size: 8
-      expert_tensor_parallel_size: 1
-      context_parallel_size: 2
+      expert_model_parallel_size: 4
+      context_parallel_size: 4
       use_distributed_optimizer: true
       sequence_parallel: true
       moe_token_dispatcher_type: "alltoall"
@@ -153,7 +150,6 @@ actor_infer:
       mem_fraction_static: 0.7
       load_format: dummy
   num_gpus_per_worker: 4
-  use_remove_padding: true
   device_mapping: list(range(0,32))
   infer_batch_size: 1
 
@@ -167,11 +163,10 @@ reference:
   strategy_args:
     strategy_name: megatron_infer
     strategy_config:
-      tensor_model_parallel_size: 4
+      tensor_model_parallel_size: 2
       pipeline_model_parallel_size: 1
-      expert_model_parallel_size: 8
-      expert_tensor_parallel_size: 1
-      context_parallel_size: 2
+      expert_model_parallel_size: 4
+      context_parallel_size: 4
       sequence_parallel: true
       moe_token_dispatcher_type: "alltoall"
       moe_grouped_gemm: true

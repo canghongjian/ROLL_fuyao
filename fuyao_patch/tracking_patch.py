@@ -22,7 +22,7 @@ class DeepInsightSwanlabTracker(SwanlabTracker):
             "system/tps_gpu": "deepinsight_infra/throughput",
 
             # 算法指标
-            "critic/rewards/mean": "deepinsight_algorithm/reward",
+            "critic/score/mean": "deepinsight_algorithm/reward",
             "critic/entropy/mean": "deepinsight_algorithm/entropy",
             "actor/pg_loss": "deepinsight_algorithm/policy_loss",
             "actor/kl_loss": "deepinsight_algorithm/kl_loss",

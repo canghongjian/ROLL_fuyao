@@ -128,7 +128,11 @@ class WorkerConfig:
     )
     topr_negative_weight: float = field(
         default=1.0,
-        metadata={"help": "Weight for negative samples in TOPR loss."},
+        metadata={"help": "Weight for negative samples in TOPR loss."}
+    )
+    use_remove_padding: bool = field(
+        default=True,
+        metadata={"help": "Remove tail padding token in a micro batch, don't pack sequences(different from verl). must set `variable_seq_lengths` for megatron."}
     )
     max_concurrency: int = field(default=1, metadata={"help": "max_concurrency of this Ray Actor"})
 
