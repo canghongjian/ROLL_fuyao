@@ -94,9 +94,12 @@ class MegatronInferStrategy(InferenceStrategy):
         self.model = None
         self.forward_backward_func = None
         self.seq_length = None
+        self.use_remove_padding = self.worker_config.use_remove_padding
         self.use_sequence_packing = self.worker_config.use_sequence_packing
         # hard to impl with offload states
         assert not self.megatron_train_args.overlap_param_gather, "overlap_param_gather is not supported"
+        if self.worker_config.use_remove_padding:
+            assert self.megatron_train_args.allow_variable_seq_lengths(), "when use_remove_padding=True, must set variable_seq_lengths=True for megatron."
 
     def initialize(self, model_provider):
         self.tokenizer = default_tokenizer_provider(model_args=self.worker_config.model_args)
@@ -406,6 +409,11 @@ class MegatronInferStrategy(InferenceStrategy):
         labels = data.batch["labels"] if "labels" in data.batch else None  # labels is only used for sft
         packed_seq_params = None
 
+        if self.use_remove_padding:
+            unpad_seq_len = self._get_unpad_seqlen(attention_mask=attention_mask)
+            input_ids = input_ids[:, :unpad_seq_len].contiguous()
+            attention_mask = attention_mask[:, :unpad_seq_len].contiguous()
+
         if self.use_sequence_packing:
             input_ids, packed_seq_params, cu_seqlens, cu_seqlens_padded = self._pack_sequences(
                 input_ids, attention_mask,
@@ -434,6 +442,8 @@ class MegatronInferStrategy(InferenceStrategy):
             if position_ids.size(1) == 4:
                 position_ids = position_ids[:, 1:, :].contiguous()  # (bsz, 4, seqlen) -> (bsz, 3, seqlen)
             position_ids = position_ids.transpose(0, 1)  # (bsz, C, seqlen) -> (C, bsz, seqlen)
+            if self.use_remove_padding:
+                position_ids = position_ids[:, :, :unpad_seq_len].contiguous()
         if "multi_modal_inputs" in data.non_tensor_batch:
             multi_modal_inputs = data.non_tensor_batch["multi_modal_inputs"]
             multi_modal_data = defaultdict(list)
@@ -525,7 +535,10 @@ class MegatronInferStrategy(InferenceStrategy):
         """
         ori_seq_length = attention_mask.size(1)
         cp_size = mpu.get_context_parallel_world_size()
-        seq_len = ori_seq_length
+        seq_len = logits.size(1) * cp_size if self.use_remove_padding else ori_seq_length
+        # remove padding token
+        if self.use_remove_padding:
+            input_ids = input_ids[:, :seq_len]
 
         labels: torch.Tensor = input_ids[:, 1:].clone()
         labels[attention_mask[:, 1:seq_len] == 0] = 0  # avoid invalid token id
@@ -536,6 +549,10 @@ class MegatronInferStrategy(InferenceStrategy):
         log_probs = vocab_parallel_logprobs(logits, labels)
         if mpu.get_context_parallel_world_size() > 1:
             log_probs = context_parallel_gather(log_probs, parallel_dim=1)
+        # add pad to recover tensor shape
+        if self.use_remove_padding:
+            pad_token_num = ori_seq_length - seq_len
+            log_probs = torch.nn.functional.pad(log_probs, pad=(0, pad_token_num), value=0)
         log_probs = log_probs[:, :-1] * attention_mask[:, 1:]
         return log_probs
 
@@ -545,6 +562,10 @@ class MegatronInferStrategy(InferenceStrategy):
         entropy = vocab_parallel_entropy(logits)
         if mpu.get_context_parallel_world_size() > 1:
             entropy = context_parallel_gather(entropy, parallel_dim=1)
+        # add pad to recover shape
+        if self.use_remove_padding:
+            pad_token_num = attention_mask.size(1) - entropy.size(1)
+            entropy = torch.nn.functional.pad(entropy, pad=(0, pad_token_num), value=0)
         entropy = entropy[:, :-1] * attention_mask[:, 1:]
         return entropy
 
